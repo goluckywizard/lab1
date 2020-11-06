@@ -6,6 +6,39 @@
 
 };*/
 enum Trit{False = 1, Unknown = 2, True = 3};
+class Tritset_proxy {
+public: Tritset_proxy(unsigned int number, unsigned int &tritcontainer)
+            : Tritcontainer(tritcontainer) {
+    //Tritcontainer = container;
+    Tritnumber = number;
+    value = ((tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b11 ? True : \
+        ((tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b00 ? False : Unknown;
+}
+void operator = (int new_value) {
+
+    if (new_value == True) {
+        Tritcontainer = Tritcontainer | (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+    }
+    if (new_value == False) {
+        //std::cout << Tritcontainer << std::endl;
+        Tritcontainer -= Tritcontainer & (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+        //std::cout << Tritcontainer << std::endl;
+        //Tritcontainer |= (0b00 << Tritnumber * 2);
+    }
+    if (new_value == Unknown) {
+        Tritcontainer -= Tritcontainer && (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+        Tritcontainer |= (0b10 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+    }
+}
+friend std::ostream & operator << (std::ostream & out, const Tritset_proxy & out_value) {
+    //out ;
+    return (out << out_value.value);
+}
+private: unsigned int &Tritcontainer;
+    unsigned int Tritnumber;
+    int value;
+};
+
 class Tritset {
 private:
     std::vector<unsigned int> forTrits;
@@ -58,7 +91,7 @@ public: Tritset (size_t size, const std::string& str, char True = 'T', char Unkn
     {
         return forTrits.size();
     }
-    int operator[](const size_t number){
+    /*int operator[](const size_t number){
         unsigned int comp = forTrits[forTrits.size() - number * 2 / 8 / sizeof(unsigned int) - 1];
         //std::cout << comp << " ";
         comp >>= (sizeof(unsigned int) * 8 - ((number * 2) % (sizeof(unsigned int) * 8))) - 2;
@@ -70,18 +103,19 @@ public: Tritset (size_t size, const std::string& str, char True = 'T', char Unkn
         if (comp == 0)
             return False;
         return Unknown;
+    }*/
+    Tritset_proxy operator[](const size_t number) {
+        return Tritset_proxy(number % (sizeof(unsigned int) * 4), forTrits[number / (sizeof(unsigned int) * 4)]);
     }
-    /*Tritset&operator[](const size_t number){
-            return
-        };*/
 };
-
 //using namespace std;
 
 int main() {
-    Tritset set(3, "TFT");
+    Tritset set(3, "TFTUF");
     //std::cout << std::endl;
-    for (int i = 0; i < 16; ++i)
+    //std::cout << set[0] << set[1] << std::endl;
+    set[3] = False;
+    for (unsigned int i = 0; i < set.capacity() * sizeof(unsigned int) * 8 / 2; ++i)
         std:: cout << set[i]  << " ";
     //std::cout << set.capacity() << sizeof(unsigned int);
     return 0;
