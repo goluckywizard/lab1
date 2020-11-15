@@ -35,6 +35,8 @@ public:
     Tritset (const std::string& str, char True = 'T', char False = 'F');
     size_t capacity();
     Tritset_proxy operator[](size_t number);
+    size_t length ();
+    size_t cardinality(Trit value);
     void operator = (Tritset *operand);
     Tritset * operator & (Tritset &operand);
     Tritset * operator | (Tritset &operand);
