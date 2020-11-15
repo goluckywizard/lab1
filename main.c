@@ -23,6 +23,7 @@ Tritset_proxy::Tritset_proxy(size_t number, std::vector<unsigned int> &Trits) : 
     }
 
 void Tritset_proxy::add (size_t amount) {
+    //std::cout <<"p";
     for (size_t i = 0; i < amount; ++i){
         int new_uint = 2;
         unsigned int ins_vec = 0b10;
@@ -40,11 +41,12 @@ void Tritset_proxy::add (size_t amount) {
     }
 }
 
-void Tritset_proxy::operator = (int new_value) {
+void Tritset_proxy::operator = (Trit new_value) {
     if (max_trits + 1 <= trits.size() * (sizeof(unsigned int) * 4)) {
         unsigned int  &Tritcontainer = (trits[max_trits / (sizeof(unsigned int) * 4)]);
         if (new_value == True) {
-            Tritcontainer = Tritcontainer | (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+            Tritcontainer |= (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+            //std::cout << " TC: " << Tritcontainer << " ";
         }
         if (new_value == False) {
             //std::cout << Tritcontainer << std::endl;
@@ -53,9 +55,10 @@ void Tritset_proxy::operator = (int new_value) {
             //Tritcontainer |= (0b00 << Tritnumber * 2);
         }
         if (new_value == Unknown) {
-            Tritcontainer -= Tritcontainer && (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
-            Tritcontainer |= (0b10 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+            Tritcontainer -= Tritcontainer & (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+            Tritcontainer += (0b10 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
         }
+        //std::cout << " Tc: " << (Tritcontainer >> 32 - Tritnumber * 2 - 2) << " ";
         trits[max_trits / (sizeof(unsigned int) * 4)] = Tritcontainer;
     }
     else{
@@ -66,7 +69,7 @@ void Tritset_proxy::operator = (int new_value) {
                 add(1);
             }
             unsigned int  &Tritcontainer = (trits[max_trits / (sizeof(unsigned int) * 4)]);
-            Tritcontainer = Tritcontainer | (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
+            Tritcontainer |= (0b11 << (sizeof(unsigned int) * 8 - Tritnumber * 2 - 2));
         }
         if (new_value == False) {
             //std::cout << Tritcontainer << std::endl;
@@ -100,12 +103,31 @@ Trit Tritset_proxy::operator & (Tritset_proxy &operand) {
     else
         return True;
 }
-
-Tritset::Tritset(size_t size){
-    forTrits.resize(size * 2 / 8 / sizeof(unsigned int) + 1);
+Trit Tritset_proxy::operator |(Tritset_proxy &operand) {
+    if (value == True || operand.value == True)
+        return True;
+    else if (value == Unknown || operand.value == Unknown)
+        return Unknown;
+    else
+        return False;
+}
+Trit Tritset_proxy::operator !() {
+    if (value == True)
+        return False;
+    else if (value == Unknown)
+        return Unknown;
+    else
+        return True;
 }
 
-Tritset::Tritset (size_t size, const std::string& str, char True_symb, char False_symp){
+Tritset::Tritset(size_t size) {
+    size_t count = size * 2 / 8 / sizeof(unsigned int);
+    if (size % (sizeof(unsigned int) * 4) > 0)
+        ++count;
+    forTrits.resize(count);
+}
+
+Tritset::Tritset (const std::string& str, char True_symb, char False_symp){
     //forTrits.resize(size * 2 / 8 / sizeof(unsigned int) + 1);
     int new_uint = 0;
     unsigned int ins_vec = 0;
@@ -155,30 +177,77 @@ Tritset_proxy Tritset::operator[](const size_t number) {
     return Tritset_proxy(number, forTrits);
 }
 
-Tritset& Tritset::operator& (Tritset &operand)
-{
+void Tritset::operator = (Tritset *operand) {
+    forTrits = operand->forTrits;
+    delete[](operand);
+}
+
+Tritset * Tritset::operator& (Tritset &operand) {
     size_t max = operand.capacity() * sizeof(unsigned int) * 4 > forTrits.size() * sizeof(unsigned int) * 4 ? \
                 operand.capacity() * sizeof(unsigned int) * 4 : forTrits.size() * sizeof(unsigned int) * 4;
-    Tritset k(max);
-    Tritset &a = k;
+
+    Tritset *a = new Tritset[1] {max};
+    //Tritset &a = k;
+    //std::cout << operand.capacity() * sizeof(unsigned int) * 4 << " -max   ";
     for (size_t i = 0; i < max; ++i)
     {
         Tritset_proxy first = operand[i];
         Tritset_proxy second = Tritset_proxy(i, forTrits);
-        a[i] = (first & second);
+        //std::cout << first << " " << second << " f&s:" << (first & second);
+        (*a)[i] = (first & second);
+        //(*a)[i] = Unknown;
+
+        //std::cout << " a[i]:" << (*a)[i] << std::endl;
     }
-    return k;
+    return a;
+}
+
+Tritset* Tritset::operator | (Tritset &operand) {
+    size_t max = operand.capacity() * sizeof(unsigned int) * 4 > forTrits.size() * sizeof(unsigned int) * 4 ? \
+                operand.capacity() * sizeof(unsigned int) * 4 : forTrits.size() * sizeof(unsigned int) * 4;
+
+    Tritset *a = new Tritset[1] {max};
+    for (size_t i = 0; i < max; ++i)
+    {
+        Tritset_proxy first = operand[i];
+        Tritset_proxy second = Tritset_proxy(i, forTrits);
+        (*a)[i] = (first | second);
+    }
+    return a;
+}
+Tritset* Tritset::operator!() {
+    Tritset *a = new Tritset[1] {forTrits.size() * sizeof(unsigned int) * 4};
+    for (size_t i = 0; i < forTrits.size() * sizeof(unsigned int) * 4; ++i)
+    {
+        Tritset_proxy first = Tritset_proxy(i, forTrits);
+        (*a)[i] = (!first);
+    }
+    return a;
 }
 
 int main() {
-    Tritset set(3, "TFTUF");
-    //std::cout << std::endl;
-    //std::cout << set[0] << set[1] << std::endl;
-    //set[45] = Unknown;
+    Tritset set(16);
+    Tritset set1("TFFFTTFU");
+    Tritset set2("TFTUUFTF");
     assert(set[1000000] == Unknown);
+    set = set1 & set2;
     for (unsigned int i = 0; i < set.capacity() * sizeof(unsigned int) * 8 / 2; ++i)
         std::cout << i % 10 << " ";
     std::cout << std::endl;
+    for (unsigned int i = 0; i < set1.capacity() * sizeof(unsigned int) * 8 / 2; ++i)
+        std:: cout  << set1[i]  << " ";
+    std::cout << std::endl;
+    for (unsigned int i = 0; i < set2.capacity() * sizeof(unsigned int) * 8 / 2; ++i)
+        std:: cout  << set2[i]  << " ";
+    std::cout << std::endl;
+    for (unsigned int i = 0; i < set.capacity() * sizeof(unsigned int) * 8 / 2; ++i)
+        std:: cout  << set[i]  << " ";
+    std::cout << std::endl;
+    set = set1 | set2;
+    for (unsigned int i = 0; i < set.capacity() * sizeof(unsigned int) * 8 / 2; ++i)
+        std:: cout  << set[i]  << " ";
+    std::cout << std::endl;
+    set = !set2;
     for (unsigned int i = 0; i < set.capacity() * sizeof(unsigned int) * 8 / 2; ++i)
         std:: cout  << set[i]  << " ";
     std::cout << std::endl << set.capacity() << " " << sizeof(unsigned int) * 8 / 2;
