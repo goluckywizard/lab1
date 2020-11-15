@@ -1,7 +1,3 @@
-//
-// Created by sasha on 13.11.2020.
-//
-
 #ifndef LAB1_CLASSES_H
 #define LAB1_CLASSES_H
 #include <iostream>
@@ -21,11 +17,13 @@ public:
 
     void add (size_t amount);
 
-    void operator = (int new_value);
+    void operator = (Trit new_value);
     friend std::ostream & operator << (std::ostream & out, const Tritset_proxy & out_value);
     bool operator == (Tritset_proxy &comp);
     bool operator == (Trit comp);
     Trit operator &(Tritset_proxy &operand);
+    Trit operator |(Tritset_proxy &operand);
+    Trit operator !();
 };
 
 class Tritset {
@@ -34,9 +32,12 @@ private:
 public:
     Tritset(size_t size);
 public:
-    Tritset (size_t size, const std::string& str, char True = 'T', char False = 'F');
+    Tritset (const std::string& str, char True = 'T', char False = 'F');
     size_t capacity();
-    Tritset_proxy operator[](const size_t number);
-    Tritset & operator & (Tritset &operand);
+    Tritset_proxy operator[](size_t number);
+    void operator = (Tritset *operand);
+    Tritset * operator & (Tritset &operand);
+    Tritset * operator | (Tritset &operand);
+    Tritset * operator!();
 };
 #endif //LAB1_CLASSES_H
