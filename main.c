@@ -4,19 +4,13 @@
 #include <vector>
 #include "classes.h"
 #include <cassert>
-/*class Tritset_proxy {
-private:
-    size_t max_trits;
-    unsigned int Tritnumber;
-    int value = Unknown;
-    std::vector<unsigned int> &trits;
-public:/*/
+
 Tritset_proxy::Tritset_proxy(size_t number, std::vector<unsigned int> &Trits) : trits(Trits) {
         max_trits = number;
         Tritnumber = number % (sizeof(unsigned int) * 4);
         if (max_trits + 1 <= trits.size() * (sizeof(unsigned int) * 4))
         {
-            unsigned int  &Tritcontainer = (Trits[number / (sizeof(unsigned int) * 4)]);
+            unsigned int  &Tritcontainer = (Trits[max_trits / (sizeof(unsigned int) * 4)]);
             value = ((Tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b11 ? True : \
                 ((Tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b00 ? False : Unknown;
         }
@@ -172,9 +166,40 @@ size_t Tritset::capacity(){
     return forTrits.size();
 }
 
-
 Tritset_proxy Tritset::operator[](const size_t number) {
     return Tritset_proxy(number, forTrits);
+}
+
+size_t Tritset::length() {
+    size_t count = forTrits.size() * sizeof(unsigned int) * 4 - 1;
+    unsigned int number = count % (sizeof(unsigned int) * 4);
+    unsigned int  Tritcontainer = (forTrits[count / (sizeof(unsigned int) * 4)]);
+    unsigned int comparable_var = ((Tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b11 ? True : \
+                ((Tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b00 ? False : Unknown;
+    while (comparable_var == Unknown && count >= 0) {
+        --count;
+        number = count % (sizeof(unsigned int) * 4);
+        Tritcontainer = (forTrits[count / (sizeof(unsigned int) * 4)]);
+        comparable_var = ((Tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b11 ? True : \
+                ((Tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b00 ? False : Unknown;
+    }
+    return count + 1;
+}
+
+size_t Tritset::cardinality(Trit value) {
+    size_t count = 0;
+    for (size_t i = 0; i < this->length(); ++i)
+    {
+        unsigned int number = i % (sizeof(unsigned int) * 4);
+        unsigned int  Tritcontainer = (forTrits[i / (sizeof(unsigned int) * 4)]);
+        //std::cout << number << " ";
+        unsigned int comparable_var = ((Tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b11 ? \
+        True : ((Tritcontainer >> (sizeof(unsigned int) * 8 - number * 2 - 2)) & 0b11) == 0b00 ? False : Unknown;
+        if (comparable_var == value)
+            count++;
+        //std::cout << comparable_var << std::endl;
+    }
+    return count;
 }
 
 void Tritset::operator = (Tritset *operand) {
@@ -187,8 +212,6 @@ Tritset * Tritset::operator& (Tritset &operand) {
                 operand.capacity() * sizeof(unsigned int) * 4 : forTrits.size() * sizeof(unsigned int) * 4;
 
     Tritset *a = new Tritset[1] {max};
-    //Tritset &a = k;
-    //std::cout << operand.capacity() * sizeof(unsigned int) * 4 << " -max   ";
     for (size_t i = 0; i < max; ++i)
     {
         Tritset_proxy first = operand[i];
@@ -196,7 +219,6 @@ Tritset * Tritset::operator& (Tritset &operand) {
         //std::cout << first << " " << second << " f&s:" << (first & second);
         (*a)[i] = (first & second);
         //(*a)[i] = Unknown;
-
         //std::cout << " a[i]:" << (*a)[i] << std::endl;
     }
     return a;
@@ -250,6 +272,6 @@ int main() {
     set = !set2;
     for (unsigned int i = 0; i < set.capacity() * sizeof(unsigned int) * 8 / 2; ++i)
         std:: cout  << set[i]  << " ";
-    std::cout << std::endl << set.capacity() << " " << sizeof(unsigned int) * 8 / 2;
+    std::cout << std::endl << set.capacity() << " " << sizeof(unsigned int) * 8 / 2 << " " << set.cardinality(Unknown);
     return 0;
 }
