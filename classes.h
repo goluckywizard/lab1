@@ -4,19 +4,20 @@
 #include <string>
 #include <bitset>
 #include <vector>
+#include <unordered_map>
 enum Trit{False = 1, Unknown = 2, True = 3};
+class Tritset;
 class Tritset_proxy {
 private:
     size_t max_trits;
     unsigned int Tritnumber;
     int value = Unknown;
-    //unsigned int Tritcontainer;
+    Tritset *base_set;
     std::vector<unsigned int> &trits;
+    friend void size_change(size_t new_size, Tritset *base);
 public:
-    Tritset_proxy(size_t number, std::vector<unsigned int> &Trits);
-
+    Tritset_proxy(size_t number, std::vector<unsigned int> &Trits, Tritset * base);
     void add (size_t amount);
-
     void operator = (Trit new_value);
     friend std::ostream & operator << (std::ostream & out, const Tritset_proxy & out_value);
     bool operator == (Tritset_proxy &comp);
@@ -29,17 +30,20 @@ public:
 class Tritset {
 private:
     std::vector<unsigned int> forTrits;
+    size_t set_size;
 public:
     Tritset(size_t size);
-public:
-    Tritset (const std::string& str, char True = 'T', char False = 'F');
+    Tritset (size_t size, const std::string& str, char True = 'T', char False = 'F');
     size_t capacity();
     Tritset_proxy operator[](size_t number);
     size_t length ();
     size_t cardinality(Trit value);
+    std::unordered_map<Trit, int, std::hash<int>> cardinality();
     void operator = (Tritset *operand);
     Tritset * operator & (Tritset &operand);
     Tritset * operator | (Tritset &operand);
     Tritset * operator!();
+    friend void size_change(size_t new_size, Tritset *base);
+    void trim (size_t lastIndex);
 };
 #endif //LAB1_CLASSES_H
