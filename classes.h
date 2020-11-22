@@ -2,9 +2,9 @@
 #define LAB1_CLASSES_H
 #include <iostream>
 #include <string>
-#include <bitset>
 #include <vector>
 #include <unordered_map>
+#include "gtest/gtest.h"
 enum Trit{False = 1, Unknown = 2, True = 3};
 class Tritset;
 class Tritset_proxy {
@@ -17,7 +17,6 @@ private:
     friend void size_change(size_t new_size, Tritset *base);
 public:
     Tritset_proxy(size_t number, std::vector<unsigned int> &Trits, Tritset * base);
-    void add (size_t amount);
     void operator = (Trit new_value);
     friend std::ostream & operator << (std::ostream & out, const Tritset_proxy & out_value);
     bool operator == (Tritset_proxy &comp);
@@ -31,6 +30,9 @@ class Tritset {
 private:
     std::vector<unsigned int> forTrits;
     size_t set_size;
+    size_t start_size;
+    void add (size_t amount);
+    friend void size_change(size_t new_size, Tritset *base);
 public:
     Tritset(size_t size);
     Tritset (size_t size, const std::string& str, char True = 'T', char False = 'F');
@@ -43,7 +45,8 @@ public:
     Tritset * operator & (Tritset &operand);
     Tritset * operator | (Tritset &operand);
     Tritset * operator!();
-    friend void size_change(size_t new_size, Tritset *base);
     void trim (size_t lastIndex);
+    void shrink();
 };
+int testes();
 #endif //LAB1_CLASSES_H
