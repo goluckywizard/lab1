@@ -1,0 +1,10 @@
+cmake_minimum_required(VERSION 3.15)
+project(lab1)
+
+set(CMAKE_CXX_STANDARD 14)
+add_executable(lab1 main.cpp classes.h test.cpp)
+add_subdirectory(Google_test)
+add_subdirectory(Google_test/lib)
+include_directories(${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+#add_executable(Google_test/lib/Google_Tests_run)
+target_link_libraries(lab1 gtest gtest_main)
