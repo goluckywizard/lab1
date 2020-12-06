@@ -1,5 +1,30 @@
-#include "classes.h"
+#include "Tritset.h"
+#include "gtest/gtest.h"
+TEST(Tritset_Test,base) {
+    Tritset set(1000);
+    size_t allocLength = set.capacity();
+    ASSERT_TRUE(allocLength >= 1000*2 / 8 / sizeof(unsigned int) );
+    set[1000000000] = Unknown;
+    ASSERT_TRUE(allocLength == set.capacity());
 
+    if(set[2000000000]==True){}
+    ASSERT_TRUE(allocLength == set.capacity());
+
+    set[1000000000] = True;
+    ASSERT_TRUE(allocLength < set.capacity());
+
+    allocLength = set.capacity();
+    set[1000000000] = Unknown;
+    set[1000000] = False;
+    ASSERT_TRUE(allocLength == set.capacity());
+    set.shrink();
+    ASSERT_TRUE(allocLength > set.capacity());
+    Tritset setA(1000);
+    Tritset setB(2000);
+    Tritset setC = setA & setB;
+    assert(setC.capacity() == setB.capacity());
+
+}
 TEST (Tritset_Test, capacity_test) {
     Tritset set(16);
     EXPECT_EQ (set.capacity(), 16*2 / 8 / sizeof(unsigned int));
@@ -140,6 +165,7 @@ TEST (Tritset_Test, shrink_test) {
     set.shrink();
     EXPECT_EQ(set.capacity(), 2000 / 4 / sizeof(unsigned int));
 }
+//TEST (Tritset_Test, construc)
 int testes() {
     ::testing::InitGoogleTest();
     return RUN_ALL_TESTS();
