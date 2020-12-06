@@ -22,8 +22,7 @@ TEST(Tritset_Test,base) {
     Tritset setA(1000);
     Tritset setB(2000);
     Tritset setC = setA & setB;
-    assert(setC.capacity() == setB.capacity());
-
+    ASSERT_TRUE(setC.capacity() == setB.capacity());
 }
 TEST (Tritset_Test, capacity_test) {
     Tritset set(16);
@@ -82,7 +81,7 @@ TEST (Tritset_Test, cardinality_test) {
     EXPECT_EQ(set.cardinality(True), 1);
     EXPECT_EQ(set.cardinality(False), 1);
     EXPECT_EQ(set.cardinality(Unknown), 29);
-    Tritset set1(10, "TUFTUFFUTFUT");
+    Tritset set1("TUFTUFFUTFUT");
     EXPECT_EQ(set1.cardinality(True), 4);
     EXPECT_EQ(set1.cardinality(False), 4);
     EXPECT_EQ(set1.cardinality(Unknown), 4);
@@ -100,16 +99,16 @@ TEST (Tritset_Test, map_cardinality_test) {
     EXPECT_EQ(set.cardinality()[True], 1);
     EXPECT_EQ(set.cardinality()[False], 1);
     EXPECT_EQ(set.cardinality()[Unknown], 29);
-    Tritset set1(10, "TUFTUFFUTFUT");
+    Tritset set1("TUFTUFFUTFUT");
     EXPECT_EQ(set1.cardinality()[True], 4);
     EXPECT_EQ(set1.cardinality()[False], 4);
     EXPECT_EQ(set1.cardinality()[Unknown], 4);
 }
 TEST (Tritset_Test, AND_test) {
-    Tritset A(9, "TTTUUUFFF");
-    Tritset B(9, "TUFTUFTUF");
+    Tritset A("TTTUUUFFF");
+    Tritset B("TUFTUFTUF");
     Tritset C(10);
-    C = A & B;
+    C = (A & B);
     EXPECT_EQ(C.length(), 9);
     EXPECT_TRUE(C[0] == True);
     EXPECT_TRUE(C[1] == Unknown);
@@ -125,8 +124,8 @@ TEST (Tritset_Test, AND_test) {
     EXPECT_EQ(setC.capacity(), 30 * 2 / 8 / sizeof(unsigned int) + 1);
 }
 TEST (Tritset_Test, OR_test) {
-    Tritset A(9, "TTTUUUFFF");
-    Tritset B(9, "TUFTUFTUF");
+    Tritset A("TTTUUUFFF");
+    Tritset B("TUFTUFTUF");
     Tritset C(10);
     C = A | B;
     EXPECT_EQ(C.length(), 9);
@@ -144,7 +143,7 @@ TEST (Tritset_Test, OR_test) {
     EXPECT_EQ(setC.capacity(), 30 * 2 / 8 / sizeof(unsigned int) + 1);
 }
 TEST (Tritset_Test, NOT_test) {
-    Tritset A(3, "TUF");
+    Tritset A("TUF");
     Tritset C(10);
     C = (!A);
     EXPECT_EQ(C.length(), 3);
@@ -165,7 +164,17 @@ TEST (Tritset_Test, shrink_test) {
     set.shrink();
     EXPECT_EQ(set.capacity(), 2000 / 4 / sizeof(unsigned int));
 }
-//TEST (Tritset_Test, construc)
+TEST (Tritset_Test, forauto) {
+    Tritset A("TTTTTTTTTT");
+    for (auto item : A) {
+        EXPECT_TRUE(item == True);
+    }
+    Tritset B("FFFFFFFFFF");
+    Tritset C = A & B;
+    for (auto item : C) {
+        EXPECT_TRUE(item == False);
+    }
+}
 int testes() {
     ::testing::InitGoogleTest();
     return RUN_ALL_TESTS();
