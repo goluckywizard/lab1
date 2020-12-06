@@ -52,6 +52,16 @@ bool Tritset_proxy::operator == (Tritset_proxy &comp) {
 bool Tritset_proxy::operator == (Trit comp) {
     return value == comp;
 }
+bool Tritset_proxy::operator != (Tritset_proxy &comp) {
+    return !(max_trits == comp.max_trits && value == comp.value);
+}
+void Tritset_proxy::operator++ ()
+{
+    *this = Tritset_proxy(max_trits+1, base_set);
+}
+Tritset_proxy Tritset_proxy::operator*(){
+    return *this;
+}
 Trit Tritset_proxy::operator & (Tritset_proxy &operand) {
     if (value == False || operand.value == False)
         return False;
@@ -100,9 +110,9 @@ Tritset::Tritset(size_t size) {
     }
 }
 
-Tritset::Tritset (size_t size, const std::string& str, char True_symb, char False_symb){
-    set_size = size;
-    start_size = size;
+Tritset::Tritset (const std::string& str, char True_symb, char False_symb){
+    set_size = str.size();
+    start_size = str.size();
     int new_uint = 0;
     unsigned int ins_vec = 0;
     size_t already_inserted = 0;
@@ -142,7 +152,7 @@ Tritset::Tritset (size_t size, const std::string& str, char True_symb, char Fals
         ins_vec *= 4;
         new_uint += 2;
     }
-    size_t count = (size - 1) * 2 / 8 / sizeof(unsigned int) + 1 - already_inserted;
+    size_t count = (set_size - 1) * 2 / 8 / sizeof(unsigned int) + 1 - already_inserted;
     for (size_t i = 0; i < count; ++i) {
         new_uint = 2;
         ins_vec = 0b10;
@@ -158,11 +168,6 @@ Tritset::Tritset (size_t size, const std::string& str, char True_symb, char Fals
             new_uint += 2;
         }
     }
-}
-Tritset::Tritset(Tritset *old_set) {
-    set_size = old_set->set_size;
-    start_size = old_set->start_size;
-    forTrits = old_set->forTrits;
 }
 Tritset::Tritset(Tritset &old_set){
     set_size = old_set.set_size;
@@ -241,44 +246,45 @@ std::unordered_map<Trit, int, std::hash<int>> Tritset::cardinality() {
     return first;
 }
 
-void Tritset::operator = (Tritset *operand) {
-    forTrits = operand->forTrits;
-    set_size = operand->set_size;
-    start_size = operand->start_size;
-    delete[](operand);
+void Tritset::operator = (Tritset &&operand) noexcept {
+    forTrits = operand.forTrits;
+    set_size = operand.set_size;
+    start_size = operand.start_size;
 }
 
-Tritset * Tritset::operator& (Tritset &operand) {
+Tritset Tritset::operator& (Tritset operand) {
     size_t max = __max(set_size, operand.set_size);
-    Tritset *a = new Tritset[1] {max};
+    //Tritset ;
+    Tritset &&a = Tritset(max);
     for (size_t i = 0; i < max; ++i)
     {
         Tritset_proxy first = operand[i];
         Tritset_proxy second = Tritset_proxy(i, *this);
-        (*a)[i] = (first & second);
+        a[i] = (first & second);
     }
+    //Tritset &&result = a;
     return a;
 }
 
-Tritset* Tritset::operator | (Tritset &operand) {
-    size_t max = operand.capacity() * sizeof(unsigned int) * 4 > forTrits.size() * sizeof(unsigned int) * 4 ? \
-                operand.capacity() * sizeof(unsigned int) * 4 : forTrits.size() * sizeof(unsigned int) * 4;
+Tritset Tritset::operator | (Tritset operand) {
+    size_t max = __max(set_size, operand.set_size);
 
-    Tritset *a = new Tritset[1] {max};
+    Tritset &&a = Tritset(max);
     for (size_t i = 0; i < max; ++i)
     {
         Tritset_proxy first = operand[i];
         Tritset_proxy second = Tritset_proxy(i, *this);
-        (*a)[i] = (first | second);
+        a[i] = (first | second);
     }
     return a;
 }
-Tritset* Tritset::operator!() {
-    Tritset *a = new Tritset[1] {forTrits.size() * sizeof(unsigned int) * 4};
+Tritset Tritset::operator!() {
+    //Tritset *a = new Tritset[1] {forTrits.size() * sizeof(unsigned int) * 4};
+    Tritset &&a = Tritset(forTrits.size() * sizeof(unsigned int) * 4);
     for (size_t i = 0; i < forTrits.size() * sizeof(unsigned int) * 4; ++i)
     {
         Tritset_proxy first = Tritset_proxy(i, *this);
-        (*a)[i] = (!first);
+        a[i] = (!first);
     }
     return a;
 }
@@ -315,4 +321,10 @@ void Tritset::shrink() {
     }
     else
         trim(start_size);
+}
+Tritset_proxy Tritset::begin(){
+    return (*this)[0];
+}
+Tritset_proxy Tritset::end() {
+    return (*this)[set_size];
 }
